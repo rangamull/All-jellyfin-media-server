@@ -1,6 +1,7 @@
 #!/bin/bash
 # setup_jellyfin.sh
 # Bootstraps host directories for Dockerized Jellyfin
+source .env
 
 # Ensure the COMMON_PATH variable is provided
 if [ -z "$COMMON_PATH" ]; then

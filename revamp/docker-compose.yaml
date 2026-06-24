@@ -1,15 +1,15 @@
 ---
 version: "3.3"
 services:
-  surfsharkvpn:
-    container_name: surfsharkvpn
+  surfsharkvpn2:
+    container_name: surfsharkvpn2
     image: qmcgaw/gluetun
     cap_add:
       - NET_ADMIN
     ports:
-      - 8080:8080
-      - 51420:51420
-      - 51420:51420/udp
+      - 8081:8081
+      - 51421:51421
+      - 51421:51421/udp
     environment:
       - VPN_SERVICE_PROVIDER=surfshark
       - VPN_TYPE=wireguard
@@ -21,12 +21,12 @@ services:
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
-    network_mode: service:surfsharkvpn
-    container_name: qbittorrent
+    network_mode: service:surfsharkvpn2
+    container_name: qbittorrent2
     depends_on:
-      - surfsharkvpn
+      - surfsharkvpn2
     environment:
-      - WEBUI_PORT=8080
+      - WEBUI_PORT=8081
       - PUID=0
       - PGID=0
       - TZ=${TZ}
@@ -37,7 +37,7 @@ services:
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
+    container_name: flaresolverr2
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - LOG_HTML=${LOG_HTML:-false}
@@ -49,7 +49,7 @@ services:
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
+    container_name: prowlarr2
     environment:
       - PUID=0
       - PGID=0
@@ -63,7 +63,7 @@ services:
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
-    container_name: sonarr
+    container_name: sonarr2
     environment:
       - PUID=0
       - PGID=0
@@ -78,7 +78,7 @@ services:
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
+    container_name: radarr2
     environment:
       - PUID=0
       - PGID=0
@@ -91,22 +91,22 @@ services:
       - 7878:7878
     restart: unless-stopped
 
-  bazarr:
-    image: lscr.io/linuxserver/bazarr:latest
-    container_name: bazarr
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=${TZ}
-    volumes:
-      - ${COMMON_PATH}/configs/bazarr:/config
-      - ${COMMON_PATH}:/data
-    ports:
-      - 6767:6767
+  # bazarr:
+  #   image: lscr.io/linuxserver/bazarr:latest
+  #   container_name: bazarr
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=${TZ}
+  #   volumes:
+  #     - ${COMMON_PATH}/configs/bazarr:/config
+  #     - ${COMMON_PATH}:/data
+  #   ports:
+  #     - 6767:6767
 
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
-    container_name: jellyfin
+    container_name: jellyfin2
     environment:
       - PUID=0
       - PGID=0
@@ -125,10 +125,11 @@ services:
 
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
+    container_name: jellyseerr2
     environment:
       - LOG_LEVEL=debug
       - TZ=${TZ}
+      - JELLYSEERR__AUTH__APIKEY=${JELLYSEERR_API_KEY}
     ports:
       - 5055:5055
     volumes:
@@ -136,9 +137,10 @@ services:
     restart: unless-stopped
 
   homarr:
-    image: ghcr.io/ajnart/homarr:latest
-    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: homarr2
     environment:
+      - SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}
       - TZ=${TZ}
     volumes:
       - ${COMMON_PATH}/configs/homarr/configs:/app/data/configs

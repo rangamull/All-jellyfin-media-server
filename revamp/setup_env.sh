@@ -1,7 +1,7 @@
 #!/bin/bash
 # setup_env.sh
 
-ENV_FILE=".env"
+ENV_FILE=".env1"
 
 # Only generate if the file doesn't exist to prevent overwriting keys
 if [ ! -f "$ENV_FILE" ]; then

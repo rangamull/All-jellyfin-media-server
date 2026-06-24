@@ -1,18 +1,18 @@
 #!/bin/bash
-# setup_radarr.sh
+# setup_sonarr.sh
 
 source .env
 
-RADARR_URL="http://localhost:7878/api/v3/downloadclient"
+SONARR_URL="http://localhost:8989/api/v3/downloadclient"
 
-echo "--> Waiting for Radarr to become responsive..."
-until curl -s --fail "http://localhost:7878/ping" > /dev/null; do
+echo "--> Waiting for Sonarr to become responsive..."
+until curl -s --fail "http://localhost:8989/ping" > /dev/null; do
     sleep 2
 done
 
-echo "--> Adding qBittorrent to Radarr..."
-curl -s -X POST "$RADARR_URL" \
-  -H "X-Api-Key: $RADARR_API_KEY" \
+echo "--> Adding qBittorrent to Sonarr..."
+curl -s -X POST "$SONARR_URL" \
+  -H "X-Api-Key: $SONARR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "enable": true,
@@ -25,12 +25,12 @@ curl -s -X POST "$RADARR_URL" \
     "configContract": "QBittorrentSettings",
     "fields": [
       { "name": "host", "value": "qbittorrent" },
-      { "name": "port", "value": 8080 },
+      { "name": "port", "value": 8081 },
       { "name": "username", "value": "admin" },
-      { "name": "password", "value": "adminadmin" },
-      { "name": "movieCategory", "value": "radarr" },
+      { "name": "password", "value": "rangamull" },
+      { "name": "tvCategory", "value": "tv-sonarr" },
       { "name": "initialState", "value": 0 }
     ]
   }' > /dev/null
 
-echo "    qBittorrent linked to Radarr successfully."
+echo "    qBittorrent linked to Sonarr successfully."

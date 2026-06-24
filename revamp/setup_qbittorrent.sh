@@ -1,6 +1,7 @@
 #!/bin/bash
 # setup_qbittorrent.sh
 # Bootstraps host directories and initial config for Dockerized qBittorrent
+source .env
 
 # Ensure the COMMON_PATH variable is provided
 if [ -z "$COMMON_PATH" ]; then
