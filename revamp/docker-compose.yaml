@@ -148,3 +148,23 @@ services:
     ports:
       - 7575:7575
     restart: unless-stopped
+
+  dashdot:
+    image: mauricenino/dashdot:nvidia
+    container_name: dashdot
+    restart: unless-stopped
+    privileged: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities:
+                - gpu
+    ports:
+      - 3001:3001
+    volumes:
+      - /:/mnt/host:ro
+    environment:
+      - TZ=${TZ}
+      - DASHDOT_ENABLE_CPU_TEMPS="true"
+      - DASHDOT_WIDGET_LIST="os,cpu,storage,ram,network,gpu"
