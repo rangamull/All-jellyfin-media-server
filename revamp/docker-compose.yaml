@@ -1,5 +1,4 @@
 ---
-version: "3.3"
 services:
   surfsharkvpn2:
     container_name: surfsharkvpn2
@@ -27,8 +26,8 @@ services:
       - surfsharkvpn2
     environment:
       - WEBUI_PORT=8081
-      - PUID=0
-      - PGID=0
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
       - TZ=${TZ}
     volumes:
       - ${COMMON_PATH}/configs/qbittorrent:/config
@@ -51,8 +50,8 @@ services:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr2
     environment:
-      - PUID=0
-      - PGID=0
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
       - TZ=${TZ}
       - PROWLARR__AUTH__APIKEY=${PROWLARR_API_KEY}
     volumes:
@@ -65,8 +64,8 @@ services:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr2
     environment:
-      - PUID=0
-      - PGID=0
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
       - TZ=${TZ}
       - SONARR__AUTH__APIKEY=${SONARR_API_KEY}
     volumes:
@@ -80,8 +79,8 @@ services:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr2
     environment:
-      - PUID=0
-      - PGID=0
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
       - TZ=${TZ}
       - RADARR__AUTH__APIKEY=${RADARR_API_KEY}
     volumes:
@@ -95,8 +94,8 @@ services:
   #   image: lscr.io/linuxserver/bazarr:latest
   #   container_name: bazarr
   #   environment:
-  #     - PUID=0
-  #     - PGID=0
+  #     - PUID=${LOCAL_UID}
+  #     - PGID=${LOCAL_GID}
   #     - TZ=${TZ}
   #   volumes:
   #     - ${COMMON_PATH}/configs/bazarr:/config
@@ -108,8 +107,8 @@ services:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin2
     environment:
-      - PUID=0
-      - PGID=0
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
       - TZ=${TZ}
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
@@ -168,3 +167,68 @@ services:
       - TZ=${TZ}
       - DASHDOT_ENABLE_CPU_TEMPS="true"
       - DASHDOT_WIDGET_LIST="os,cpu,storage,ram,network,gpu"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    environment:
+      - TZ=${TZ}
+      - WATCHTOWER_CLEANUP=true # Deletes old images after updating to save disk space
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * * # Checks for updates every day at 4:00 AM
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:latest
+    container_name: recyclarr
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}/configs/recyclarr:/config
+    restart: unless-stopped
+
+  tdarr:
+    image: ghcr.io/haveagitgat/tdarr:latest
+    container_name: tdarr
+    environment:
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
+      - TZ=${TZ}
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+    volumes:
+      - ${COMMON_PATH}/configs/tdarr/server:/app/server
+      - ${COMMON_PATH}/configs/tdarr/configs:/app/configs
+      - ${COMMON_PATH}/configs/tdarr/logs:/app/logs
+      - ${COMMON_PATH}:/data
+      - ${COMMON_PATH}/tdarr/cache:/temp
+    ports:
+      - 8265:8265
+      - 8266:8266
+    restart: unless-stopped
+
+  tdarr_node:
+    image: ghcr.io/haveagitgat/tdarr_node:latest
+    container_name: tdarr_node
+    environment:
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
+      - TZ=${TZ}
+      - nodeName=MainGPU_Node
+      - serverIP=tdarr
+      - serverPort=8266
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities:
+                - gpu
+    volumes:
+      - ${COMMON_PATH}/configs/tdarr/configs:/app/configs
+      - ${COMMON_PATH}/configs/tdarr/logs:/app/logs
+      - ${COMMON_PATH}:/data
+      - ${COMMON_PATH}/tdarr/cache:/temp
+    restart: unless-stopped
