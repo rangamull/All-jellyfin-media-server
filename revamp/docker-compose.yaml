@@ -143,9 +143,7 @@ services:
       - SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}
       - TZ=${TZ}
     volumes:
-      - ${COMMON_PATH}/configs/homarr/configs:/app/data/configs
-      - ${COMMON_PATH}/configs/homarr/icons:/app/public/icons
-      - ${COMMON_PATH}/configs/homarr/data:/data
+      - ${COMMON_PATH}/configs/homarr/appdata:/appdata
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 7575:7575

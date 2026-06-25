@@ -33,3 +33,17 @@ fi
 # chown -R 0:0 "${COMMON_PATH}/configs/qbittorrent" "${COMMON_PATH}/qbittorrent"
 
 echo "--> qBittorrent bootstrap complete."
+
+echo "--> Creating Jellyfin configuration and cache directories..."
+mkdir -p "${COMMON_PATH}/configs/jellyfin"
+mkdir -p "${COMMON_PATH}/jellyfin/cache"
+
+echo "--> Creating shared media directories for Jellyfin to scan..."
+# Creating these here ensures Jellyfin doesn't throw errors looking for missing mounts
+mkdir -p "${COMMON_PATH}/sonarr/tv"
+mkdir -p "${COMMON_PATH}/radarr/movies"
+
+echo "--> Jellyfin bootstrap complete."
+echo "    Note: Internal library setup (mapping to /data/sonarr/tv) must be done via the Jellyfin web wizard on first launch."
+
+mkdir -p "${COMMON_PATH}/configs/homarr/appdata"

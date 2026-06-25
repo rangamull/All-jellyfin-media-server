@@ -1,7 +1,7 @@
 #!/bin/bash
 # setup_env.sh
 
-ENV_FILE=".env1"
+ENV_FILE=".env"
 
 # Only generate if the file doesn't exist to prevent overwriting keys
 if [ ! -f "$ENV_FILE" ]; then
@@ -14,7 +14,7 @@ if [ ! -f "$ENV_FILE" ]; then
 
     cat <<EOF > "$ENV_FILE"
 # Shared variables
-COMMON_PATH=/your/chosen/path
+COMMON_PATH=/home/jelly/Documents
 TZ=Europe/London
 
 # Persistent API Keys

@@ -126,3 +126,11 @@ chmod +x setup_sonarr.sh setup_radarr.sh
                                      └──> Bazarr (Scans and drops .srt subtitles)
 
 ```
+
+# fix homarr:
+
+```bash
+docker stop homarr2
+docker rm homarr2
+docker-compose -f Documents/All-jellyfin-media-server/revamp/docker-compose.yaml up -d homarr
+```
