@@ -1,17 +1,12 @@
-Here is the complete, finalized order of operations. I have structured this as a raw Markdown file that you can copy, save as `README.md` or `INSTALL.md`, and keep right alongside your project files for future reference.
-
-It strictly adheres to your custom path: `revamp/docker-compose.yaml`.
-
-````markdown
 # Media Server Deployment Guide
 
-This document outlines the exact order of execution required to bootstrap directories, seed core application configurations, inject API keys, and launch the media server stack.
+This document outlines the exact order of execution required to initialize your environment, bootstrap all system directory structures, and deploy your fully automated media stack.
 
 ---
 
 ## Architecture Overview
 
-By following this exact sequence, the entire stack will be deployed with a unified storage path (`/data`). This design ensures that **atomic moves and hardlinks** function natively between qBittorrent, Sonarr, and Radarr, completely eliminating storage waste and slow file-copy operations.
+By following this exact sequence, the entire stack will deploy with a unified storage path (`/data`) mapped to your host. This ensures that **atomic moves and hardlinks** function natively between qBittorrent, Sonarr, and Radarr, completely eliminating storage waste and disk overhead. All applications are secured behind custom User/Group IDs to prevent permission errors.
 
 ---
 
@@ -19,37 +14,31 @@ By following this exact sequence, the entire stack will be deployed with a unifi
 
 ### Step 1: Environment Initialization
 
-**Responsibility:** Generates permanent 32-character hexadecimal API keys for Sonarr, Radarr, and Prowlarr, and saves them to a centralized `.env` file. Docker Compose reads this file automatically to lock down container security on boot.
+**Responsibility:** Automatically captures your host system's non-root `LOCAL_UID` and `LOCAL_GID`, generates permanent 32-character hexadecimal API keys for your services, and saves them to a centralized `.env` file. Docker Compose reads this file automatically on boot to secure container permissions and API integrations.
 
-1. Create and execute the environment script:
+1. Make the environment script executable and run it:
+
    ```bash
    chmod +x setup_env.sh
    ./setup_env.sh
    ```
-````
 
-2. **Crucial:** Open the newly generated `.env` file and update the `COMMON_PATH` variable to point to your actual storage array (e.g., `/mnt/storage/media`).
+2. **Crucial:** Open the newly generated `.env` file and update your custom paths and credentials:
+
+- Set `COMMON_PATH` to your storage array (e.g., `/mnt/storage/media`).
+- Add your Surfshark Wireguard credentials (`PRIVATE_KEY` and `WIREGUARD_ADDR`).
 
 ---
 
-### Step 2: Bootstrap Host Directories and Pre-seed Configs
+### Step 2: Bootstrap Host Directories
 
-**Responsibility:** Creates all mandatory directory structures on the host system _before_ the containers start. This prevents Docker from creating folders with restrictive root permissions. It also pre-seeds the network/configuration parameters for qBittorrent and Bazarr so they are instantly linked upon booting.
+**Responsibility:** Creates all mandatory configuration and cache directory structures on the host filesystem _before_ the containers start. This ensures files are pre-owned by your user account rather than letting Docker generate them as `root`. It also pre-seeds necessary config templates.
 
-1. Make all bootstrap scripts executable:
-
-```bash
-chmod +x setup_qbittorrent.sh setup_jellyfin.sh setup_bazarr.sh setup_homarr.sh
-
-```
-
-2. Execute the bootstrap scripts in any order:
+1. Make the application bootstrap script executable and run it:
 
 ```bash
-./setup_qbittorrent.sh
-./setup_jellyfin.sh
-./setup_bazarr.sh
-./setup_homarr.sh
+chmod +x setup_apps.sh
+./setup_apps.sh
 
 ```
 
@@ -57,73 +46,87 @@ chmod +x setup_qbittorrent.sh setup_jellyfin.sh setup_bazarr.sh setup_homarr.sh
 
 ### Step 3: Launch the Docker Container Stack
 
-**Responsibility:** Spins up your network interface (Gluetun/Surfshark), download clients, media indices, management arrs, and dashboards via Docker Compose using your specific file path.
+**Responsibility:** Pulls the required images and spins up your network interface (Gluetun/Surfshark), download clients, media indexing managers, transcoding nodes, automated updates, and dashboards via Docker Compose.
 
 1. Deploy the stack in detached mode:
 
 ```bash
-docker compose -f revamp/docker-compose.yaml up -d
+docker-compose -f revamp/docker-compose.yaml  up -d
 
 ```
 
 2. Verify all containers are running successfully:
 
 ```bash
-docker compose -f revamp/docker-compose.yaml ps
+docker-compose -f revamp/docker-compose.yaml  ps
 
 ```
 
-3. Allow **1 to 2 minutes** for all application internal web servers to fully initialize before proceeding to Step 4.
+3. Allow **1 to 2 minutes** for all internal application databases and web servers to fully initialize before accessing their dashboards.
 
 ---
 
-### Step 4: Automate App-to-App API Integrations
+### Step 4: Web UI Finalization & Integrations
 
-**Responsibility:** Uses curl to hit the internal REST APIs of Sonarr and Radarr. This automatically attaches qBittorrent as their primary download client, applies proper download categories, and establishes immediate inter-container communications.
+**Responsibility:** Completes setups for software that relies on internal application wizards or custom UI-driven configurations.
 
-1. Make the API integration scripts executable:
-
-```bash
-chmod +x setup_sonarr.sh setup_radarr.sh
-
-```
-
-2. Execute the API configuration scripts:
-
-```bash
-./setup_sonarr.sh
-./setup_radarr.sh
-
-```
-
----
-
-### Step 5: Manual Web UI Finalization
-
-**Responsibility:** Completes setups for software that relies on internal database structures or interactive user wizards which cannot be safely scripted via bash.
-
-| Application    | Address                 | Mandatory Action                                                                                                                                            |
-| -------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Jellyfin**   | `http://localhost:8096` | Complete the wizard, add libraries pointing to `/data/sonarr/tv` and `/data/radarr/movies`. Go to _Dashboard -> API Keys_ to generate a key for Jellyseerr. |
-| **Homarr**     | `http://localhost:7575` | Create your admin account. Add widgets for your services. Use internal container domains (e.g., `http://sonarr:8989`) for integrations.                     |
-| **Prowlarr**   | `http://localhost:9696` | Go to _Settings -> Apps_, add Sonarr/Radarr using the permanent API keys found in your `.env` file to sync indexers.                                        |
-| **Jellyseerr** | `http://localhost:5055` | Log in, point it to Radarr (`http://radarr:7878`), Sonarr (`http://sonarr:8989`), and input the Jellyfin API key generated above.                           |
+| Application     | Address                 | Mandatory Action / Connection Details                                                                                                                                                 |
+| --------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Homarr**      | `http://localhost:7575` | Create your master admin account. Go to _Settings -> Integrations_ to add Docker (internal socket) and Dashdot (`http://dashdot:3001`). Turn on CPU/RAM columns in the Docker widget. |
+| **Dashdot**     | `http://localhost:3001` | Runs automatically to feed system metrics (including GPU thermals/load) directly into your Homarr dashboard widgets.                                                                  |
+| **qBittorrent** | `http://localhost:8081` | Access the Web UI                                                                                                                                                                     |
+| **Prowlarr**    | `http://localhost:9696` | Go to _Settings -> Apps_, add Sonarr and Radarr using the permanent API keys generated in your `.env` file to instantly sync indexers.                                                |
+| **Sonarr**      | `http://localhost:8989` | Handled by script, but verify under _Settings -> Download Clients_ that `qbittorrent` is listed with a green checkmark. Add your initial TV Series.                                   |
+| **Radarr**      | `http://localhost:7878` | Handled by script, but verify under _Settings -> Download Clients_ that `qbittorrent` is listed with a green checkmark. Add your initial Movies.                                      |
+| **Jellyseerr**  | `http://localhost:5055` | Follow the login prompt. Link it internally to Radarr (`http://radarr:7878`), Sonarr (`http://sonarr:8989`), and input your Jellyfin API key.                                         |
+| **Jellyfin**    | `http://localhost:8096` | Complete the wizard. Add your libraries pointing to `/data/sonarr` and `/data/radarr`. Navigate to _Dashboard -> API Keys_ to generate an access token for Jellyseerr.                |
+| **Tdarr**       | `http://localhost:8265` | Go to the _Libraries_ tab. Add your `/data` media path and assign transcoding plugins to automate file sizing and GPU acceleration.                                                   |
 
 ---
 
 ## Summary of Stack Operations
 
 ```
-[User Request] -> Jellyseerr -> Sonarr/Radarr -> Prowlarr (Finds Torrents)
-                                     │
-                                     ▼
-                                qBittorrent (Downloads to /data/qbittorrent/downloads)
-                                     │
-                                     ▼ (Instant Hardlink triggered via /data)
-                                Sonarr/Radarr (Hardlinks to /data/sonarr or /data/radarr)
-                                     │
-                                     ├──> Jellyfin (Streams to Client - Direct Play)
-                                     └──> Bazarr (Scans and drops .srt subtitles)
+   [User Request via Web] -> Jellyseerr -> Sonarr / Radarr -> Prowlarr
+                                                │
+                                                ▼ (Routed through Surfshark VPN)
+                                           qBittorrent (Downloads to /data/...)
+                                                │
+                                                ▼ (Instant Hardlink triggered via /data)
+                                           Sonarr / Radarr (Sorts into media folders)
+                                                │
+         ┌──────────────────────────────────────┴──────────────────────────────────────┐
+         ▼                                      ▼                                      ▼
+Jellyfin (Streams Video)             Tdarr (Transcodes / Shrinks)            Recyclarr (Syncs TRaSH Profiles)
+
+```
+
+## Maintenance Commands
+
+- **View live service logs:**
+
+```bash
+docker-compose -f revamp/docker-compose.yaml logs -f [service_name]
+
+```
+
+- **Gracefully stop the entire stack:**
+
+```bash
+docker-compose -f revamp/docker-compose.yaml down
+
+```
+
+- **Fix legacy permissions if you accidentally run commands as root:**
+
+```bash
+sudo chown -R $(id -u):$(id -g) /path/to/your/common_path
+
+```
+
+_(Note: Watchtower runs automatically in the background at 4:00 AM daily to check for application updates, cleanly recycling containers and clearing out stale Docker layers.)_
+
+```
 
 ```
 
@@ -133,4 +136,13 @@ chmod +x setup_sonarr.sh setup_radarr.sh
 docker stop homarr2
 docker rm homarr2
 docker-compose -f Documents/All-jellyfin-media-server/revamp/docker-compose.yaml up -d homarr
+```
+
+# fix "root" permission issue
+
+```bash
+id
+# check UID/GID values generated (do the substitution on below)
+sudo chown -R uid:gid ${COMMON_PATH}
+# then update the docker-compose PUID/PGID values with the same (from env is probs easiest)
 ```
