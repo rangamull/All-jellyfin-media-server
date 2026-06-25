@@ -1,6 +1,4 @@
 #!/bin/bash
-# setup_qbittorrent.sh
-# Bootstraps host directories and initial config for Dockerized qBittorrent
 source .env
 
 # Ensure the COMMON_PATH variable is provided
@@ -47,3 +45,41 @@ echo "--> Jellyfin bootstrap complete."
 echo "    Note: Internal library setup (mapping to /data/sonarr/tv) must be done via the Jellyfin web wizard on first launch."
 
 mkdir -p "${COMMON_PATH}/configs/homarr/appdata"
+
+echo "--> Creating Tdarr config and processing directories..."
+mkdir -p "${COMMON_PATH}/configs/tdarr/server"
+mkdir -p "${COMMON_PATH}/configs/tdarr/configs"
+mkdir -p "${COMMON_PATH}/configs/tdarr/logs"
+
+# The cache folder where video files are held while being transcoded
+mkdir -p "${COMMON_PATH}/tdarr/cache"
+
+echo "--> Creating Recyclarr directories..."
+mkdir -p "${COMMON_PATH}/configs/recyclarr"
+
+RECYCLARR_CONF="${COMMON_PATH}/configs/recyclarr/recyclarr.yml"
+
+echo "--> Seeding initial Recyclarr configuration with API Keys..."
+if [ ! -f "$RECYCLARR_CONF" ]; then
+    cat <<EOF > "$RECYCLARR_CONF"
+# Recyclarr Configuration (Auto-Generated)
+sonarr:
+  main_sonarr:
+    base_url: http://sonarr:8989
+    api_key: $SONARR_API_KEY
+    quality_profiles:
+      - name: Any
+
+radarr:
+  main_radarr:
+    base_url: http://radarr:7878
+    api_key: $RADARR_API_KEY
+    quality_profiles:
+      - name: Any
+EOF
+    echo "    Created $RECYCLARR_CONF linked to Sonarr and Radarr."
+else
+    echo "    Recyclarr config already exists. Skipping."
+fi
+
+echo "--> Recyclarr bootstrap complete."
