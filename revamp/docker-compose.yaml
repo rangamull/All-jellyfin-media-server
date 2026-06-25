@@ -6,9 +6,10 @@ services:
     cap_add:
       - NET_ADMIN
     ports:
-      - 8081:8081
       - 51421:51421
       - 51421:51421/udp
+      - 8081:8081 # qbittorrent
+      - 9696:9696 # prowlarr
     environment:
       - VPN_SERVICE_PROVIDER=surfshark
       - VPN_TYPE=wireguard
@@ -49,6 +50,9 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr2
+    network_mode: service:surfsharkvpn2
+    depends_on:
+      - surfsharkvpn2
     environment:
       - PUID=${LOCAL_UID}
       - PGID=${LOCAL_GID}
