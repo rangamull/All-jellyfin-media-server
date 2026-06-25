@@ -146,3 +146,57 @@ id
 sudo chown -R uid:gid ${COMMON_PATH}
 # then update the docker-compose PUID/PGID values with the same (from env is probs easiest)
 ```
+
+## Future integration - online exposure
+
+By placing an authentication provider in front of your reverse proxy, you create a "Forward Auth" system. This means that before a user even sees the Jellyseerr or Radarr login page, they are blocked by a secure portal requiring a password and, ideally, Two-Factor Authentication (2FA).
+
+Here are the 2 best open-source, Docker-ready authentication providers for homelabs.
+
+---
+
+### 1. Authelia
+
+**Website:** [https://www.authelia.com/](https://www.authelia.com/)
+
+Authelia is the darling of the self-hosted community. It was built specifically to sit in front of reverse proxies (like NGINX, Traefik, or SWAG) and act as a secure gateway. Furthermore, LinuxServer.io maintains a curated configuration for it, making it fit perfectly into your existing ecosystem.
+
+- **Pros:**
+- **Incredibly Lightweight:** Written in Go, it uses virtually zero CPU and usually idles around 25 MB of RAM.
+- **Laser-Focused:** It does exactly one thing—forward authentication for reverse proxies—and it does it flawlessly, including seamless Passkey/WebAuthn and Duo push notifications.
+
+- **Cons:**
+- **No Web UI for Admin:** Every configuration, user creation, and access rule must be written manually in a YAML text file. If you make a typo, the container won't start.
+- **Not a Full IdP:** While it handles forward auth perfectly, it lacks deep support for complex enterprise protocols like SAML if you ever want to expand into heavy identity brokering.
+
+**Ratings (out of 5):**
+
+- **Difficulty/Complexity:** 2 / 5 (YAML can be tricky, but it is simple once running)
+- **Security:** 5 / 5 (Tiny attack surface and secure defaults)
+- **Heaviness to run:** 1 / 5 (Barely noticeable)
+- **Maintenance:** 2 / 5 (Set it and forget it)
+- **Integration suitability:** 5 / 5 (The absolute best choice for your current stack)
+
+---
+
+### 2. Authentik
+
+**Website:** [https://goauthentik.io/](https://goauthentik.io/)
+
+If Authelia is a bouncer at the door, Authentik is an entire corporate HR department. It is a full Identity Provider (IdP) that aims to be a self-hosted alternative to enterprise solutions like Okta. It recently matured beautifully in 2026, including dropping its heavy Redis dependency.
+
+- **Pros:**
+- **Brilliant Web UI & Flow Engine:** You configure everything from a beautiful dashboard. You can visually drag-and-drop "Flows" (e.g., "If user is Admin, require Password + YubiKey; if user is Guest, require Password + Email code").
+- **Massive Protocol Support:** It handles Forward Auth, OIDC, SAML, LDAP, and even includes a built-in proxy for apps that refuse to play nice.
+
+- **Cons:**
+- **Architectural Overhead:** It requires running its own PostgreSQL database container alongside it.
+- **Higher Attack Surface:** Because it includes a massive admin web UI and supports dozens of protocols, it inherently has a larger footprint for potential security vulnerabilities than a simple YAML-based gateway.
+
+**Ratings (out of 5):**
+
+- **Difficulty/Complexity:** 3.5 / 5 (The UI is great, but understanding "Flows" takes an afternoon)
+- **Security:** 4 / 5 (Highly secure, but requires securing the admin portal)
+- **Heaviness to run:** 3 / 5 (~150-200 MB of RAM + Database)
+- **Maintenance:** 3 / 5 (Database backups required)
+- **Integration suitability:** 4.5 / 5 (Extremely versatile if you outgrow Authelia)
