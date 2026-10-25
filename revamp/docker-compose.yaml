@@ -54,14 +54,13 @@ services:
     depends_on:
       - surfsharkvpn2
     environment:
+      - WEBUI_PORT=9696
       - PUID=${LOCAL_UID}
       - PGID=${LOCAL_GID}
       - TZ=${TZ}
       - PROWLARR__AUTH__APIKEY=${PROWLARR_API_KEY}
     volumes:
       - ${COMMON_PATH}/configs/prowlarr:/config
-    ports:
-      - 9696:9696
     restart: unless-stopped
 
   sonarr:
@@ -126,17 +125,25 @@ services:
       - ${COMMON_PATH}:/data
     restart: unless-stopped
 
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr2
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
     environment:
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
       - LOG_LEVEL=debug
       - TZ=${TZ}
-      - JELLYSEERR__AUTH__APIKEY=${JELLYSEERR_API_KEY}
     ports:
       - 5055:5055
     volumes:
       - ${COMMON_PATH}/configs/jellyseerr:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
     restart: unless-stopped
 
   homarr:
@@ -153,16 +160,10 @@ services:
     restart: unless-stopped
 
   dashdot:
-    image: mauricenino/dashdot:nvidia
+    image: mauricenino/dashdot:latest
     container_name: dashdot
     restart: unless-stopped
     privileged: true
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities:
-                - gpu
     ports:
       - 3001:3001
     volumes:
@@ -170,10 +171,10 @@ services:
     environment:
       - TZ=${TZ}
       - DASHDOT_ENABLE_CPU_TEMPS="true"
-      - DASHDOT_WIDGET_LIST="os,cpu,storage,ram,network,gpu"
+      - DASHDOT_WIDGET_LIST="os,cpu,storage,ram,network"
 
   watchtower:
-    image: containrrr/watchtower:latest
+    image: ghcr.io/nicholas-fedor/watchtower:latest
     container_name: watchtower
     environment:
       - TZ=${TZ}
@@ -188,51 +189,53 @@ services:
     image: ghcr.io/recyclarr/recyclarr:latest
     container_name: recyclarr
     environment:
+      - PUID=${LOCAL_UID}
+      - PGID=${LOCAL_GID}
       - TZ=${TZ}
     volumes:
       - ${COMMON_PATH}/configs/recyclarr:/config
     restart: unless-stopped
 
-  tdarr:
-    image: ghcr.io/haveagitgat/tdarr:latest
-    container_name: tdarr
-    environment:
-      - PUID=${LOCAL_UID}
-      - PGID=${LOCAL_GID}
-      - TZ=${TZ}
-      - serverIP=0.0.0.0
-      - serverPort=8266
-      - webUIPort=8265
-    volumes:
-      - ${COMMON_PATH}/configs/tdarr/server:/app/server
-      - ${COMMON_PATH}/configs/tdarr/configs:/app/configs
-      - ${COMMON_PATH}/configs/tdarr/logs:/app/logs
-      - ${COMMON_PATH}:/data
-      - ${COMMON_PATH}/tdarr/cache:/temp
-    ports:
-      - 8265:8265
-      - 8266:8266
-    restart: unless-stopped
+  # tdarr:
+  #   image: ghcr.io/haveagitgat/tdarr:latest
+  #   container_name: tdarr
+  #   environment:
+  #     - PUID=${LOCAL_UID}
+  #     - PGID=${LOCAL_GID}
+  #     - TZ=${TZ}
+  #     - serverIP=0.0.0.0
+  #     - serverPort=8266
+  #     - webUIPort=8265
+  #   volumes:
+  #     - ${COMMON_PATH}/configs/tdarr/server:/app/server
+  #     - ${COMMON_PATH}/configs/tdarr/configs:/app/configs
+  #     - ${COMMON_PATH}/configs/tdarr/logs:/app/logs
+  #     - ${COMMON_PATH}:/data
+  #     - ${COMMON_PATH}/tdarr/cache:/temp
+  #   ports:
+  #     - 8265:8265
+  #     - 8266:8266
+  #   restart: unless-stopped
 
-  tdarr_node:
-    image: ghcr.io/haveagitgat/tdarr_node:latest
-    container_name: tdarr_node
-    environment:
-      - PUID=${LOCAL_UID}
-      - PGID=${LOCAL_GID}
-      - TZ=${TZ}
-      - nodeName=MainGPU_Node
-      - serverIP=tdarr
-      - serverPort=8266
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities:
-                - gpu
-    volumes:
-      - ${COMMON_PATH}/configs/tdarr/configs:/app/configs
-      - ${COMMON_PATH}/configs/tdarr/logs:/app/logs
-      - ${COMMON_PATH}:/data
-      - ${COMMON_PATH}/tdarr/cache:/temp
-    restart: unless-stopped
+  # tdarr_node:
+  #   image: ghcr.io/haveagitgat/tdarr_node:latest
+  #   container_name: tdarr_node
+  #   environment:
+  #     - PUID=${LOCAL_UID}
+  #     - PGID=${LOCAL_GID}
+  #     - TZ=${TZ}
+  #     - nodeName=MainGPU_Node
+  #     - serverIP=tdarr
+  #     - serverPort=8266
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - capabilities:
+  #               - gpu
+  #   volumes:
+  #     - ${COMMON_PATH}/configs/tdarr/configs:/app/configs
+  #     - ${COMMON_PATH}/configs/tdarr/logs:/app/logs
+  #     - ${COMMON_PATH}:/data
+  #     - ${COMMON_PATH}/tdarr/cache:/temp
+  #   restart: unless-stopped

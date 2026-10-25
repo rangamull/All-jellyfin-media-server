@@ -26,6 +26,8 @@ if [ ! -f "$ENV_FILE" ]; then
     SONARR_KEY=$(openssl rand -hex 16)
     RADARR_KEY=$(openssl rand -hex 16)
     PROWLARR_KEY=$(openssl rand -hex 16)
+    SECRET_ENCRYPTION_KEY=$(openssl rand -hex 32)
+    JELLYSEERR_API_KEY=$(openssl rand -hex 16)
 
     cat <<EOF > "$ENV_FILE"
 # Shared variables
@@ -36,6 +38,8 @@ TZ=Europe/London
 SONARR_API_KEY=$SONARR_KEY
 RADARR_API_KEY=$RADARR_KEY
 PROWLARR_API_KEY=$PROWLARR_KEY
+SECRET_ENCRYPTION_KEY=$SECRET_ENCRYPTION_KEY
+JELLYSEERR_API_KEY=$JELLYSEERR_API_KEY
 
 # User and Group IDs for container permissions
 LOCAL_UID=$LOCAL_UID

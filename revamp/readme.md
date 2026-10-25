@@ -133,9 +133,9 @@ _(Note: Watchtower runs automatically in the background at 4:00 AM daily to chec
 # fix homarr:
 
 ```bash
-docker stop homarr2
-docker rm homarr2
-docker-compose -f Documents/All-jellyfin-media-server/revamp/docker-compose.yaml up -d homarr
+docker stop homarr
+docker rm homarr
+sudo docker-compose -f ./revamp/docker-compose.yaml up -d homarr
 ```
 
 # fix "root" permission issue
